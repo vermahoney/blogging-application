@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
+// routes
+
 router.get("/signin", (req, res) => {
     res.render("signin");
 });
@@ -9,10 +11,18 @@ router.get("/signup", (req, res) => {
     res.render("signup");
 });
 
+// signin
 
- router.post("/signin", async (req, res) => {
-    const { email, password } = req.body;           
-    const isMatched = user.matchpass(email, password)
+router.post("/signin", async (req, res) => {
+    const { email, password } = req.body;
+
+    // login logic
+
+    return res.redirect("/");
+});
+
+// signup
+
 router.post("/signup", async (req, res) => {
     const { username, email, password } = req.body;
 
