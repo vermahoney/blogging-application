@@ -71,6 +71,10 @@ userSchema.static("matchpass", async function (email, password) {
   }
 
   return user;
+
+  const token = createTokenForUser(user);
+
+  return { user, token };
 });
 
 const User = model("User", userSchema);
