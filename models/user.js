@@ -1,58 +1,78 @@
-const { createHmac, randomBytes } = require('crypto');
-const { Schema , model} = require('mongoose');
+const { createHmac, randomBytes } = require("crypto");
+const { Schema, model } = require("mongoose");
 
-const userSchema = new Schema({
-  username: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
+const userSchema = new Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
     salt: {
-    type: String,
-    required: true
+      type: String,
+      required: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+    },
+
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
-  password: {
-    type: String,
-    required: true
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+  { timestamps: true }
+);
+
+// Hash password before saving
+userSchema.pre("save", function (next) {
+  const user = this;
+
+  if (!user.isModified("password")) {
+    return next();
   }
 
-}
-,{timestamps: true});
+  const salt = randomBytes(16).toString();
 
-userSchema.pre("save", function(next) {
-    const user = this;
+  const hashedPassword = createHmac("sha256", salt)
+    .update(user.password)
+    .digest("hex");
 
-    if(!user.isModified("password")) return;
+  user.salt = salt;
+  user.password = hashedPassword;
 
-    const salt = randomBytes(16).toString();
-    const hashedPassword = createHmac('sha256', salt).update(user.password).digest('hex');
-
-    this.salt = salt;
-    this.password = hashedPassword;
+  next();
 });
 
-userSchema.static('matchpass',function (email, password) {
-    return this.findOne({ email });
-        if (!user) 
-            return false;
+// Match password during login
+userSchema.static("matchpass", async function (email, password) {
+  const user = await this.findOne({ email });
 
-        const salt = user.salt;
-        const hashedPassword = user.password;
+  if (!user) {
+    return false;
+  }
 
-        const userProvidedHash= createHmac('sha256', salt).update(password).digest('hex');
-        return {...user, password: undefined, salt:undefined};
-        
+  const userProvidedHash = createHmac("sha256", user.salt)
+    .update(password)
+    .digest("hex");
 
-const User = model('User', userSchema);
+  if (userProvidedHash !== user.password) {
+    return false;
+  }
 
-module.exports = User;  
+  return user;
+});
+
+const User = model("User", userSchema);
+
+module.exports = User;
