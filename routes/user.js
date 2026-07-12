@@ -15,10 +15,13 @@ router.get("/signup", (req, res) => {
 
 router.post("/signin", async (req, res) => {
     const { email, password } = req.body;
+    console.log(email, password);
+    const token = await User.matchpass(email, password);
 
-    // login logic
+    return res.cookie("token", token).redirect("/"); 
 
-    return res.redirect("/");
+
+    
 });
 
 // signup
